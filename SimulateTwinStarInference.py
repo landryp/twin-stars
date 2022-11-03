@@ -23,6 +23,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+get_ipython().system(' python3 -m pip install seaborn --upgrade')
 import seaborn as sns
 import scipy.stats as stats
 from time import time
@@ -767,7 +768,7 @@ trace_plot(sampler.chain,['L14','Mt','DeltaL'],N_BURNIN)
 # In[ ]:
 
 fig = plt.figure()
-sns.kdeplot(post['L14'],post['Mt'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1])
+sns.kdeplot(x=post['L14'],y=post['Mt'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1])
 plt.scatter(np.random.uniform(PRIOR_L14MIN,PRIOR_L14MAX,5000),np.random.uniform(PRIOR_MtMIN,PRIOR_MtMAX,5000),marker='.',c='k',alpha=0.05,label='prior')
 plt.scatter(L14,Mt,marker='+',c='r',label='injection')
 plt.legend(frameon=False)
@@ -777,7 +778,7 @@ plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_L14Mtwin-{3}.png'.format(SCENARIO,POPMOD,eo
 # In[ ]:
 
 fig = plt.figure()
-sns.kdeplot(post['L14'],post['DeltaL'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
+sns.kdeplot(x=post['L14'],y=post['DeltaL'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
 plt.scatter(np.random.uniform(PRIOR_L14MIN,PRIOR_L14MAX,5000),np.random.uniform(PRIOR_DeltaLMIN,PRIOR_DeltaLMAX,5000),marker='.',c='k',alpha=0.05,label='prior')
 plt.scatter(L14,DeltaL,marker='+',c='r',label='injection')
 plt.legend(frameon=False)
@@ -787,7 +788,7 @@ plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_L14DeltaL-{3}.png'.format(SCENARIO,POPMOD,e
 # In[ ]:
 
 fig = plt.figure()
-sns.kdeplot(post['Mt'],post['DeltaL'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
+sns.kdeplot(x=post['Mt'],y=post['DeltaL'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
 plt.scatter(np.random.uniform(PRIOR_MtMIN,PRIOR_MtMAX,5000),np.random.uniform(PRIOR_DeltaLMIN,PRIOR_DeltaLMAX,5000),marker='.',c='k',alpha=0.05,label='prior')
 plt.scatter(Mt,DeltaL,marker='+',c='r',label='injection')
 plt.legend(frameon=False)
