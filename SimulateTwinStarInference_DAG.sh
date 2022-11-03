@@ -12,9 +12,9 @@ numversions=$5 # v1
 
 # Create output files and directories
 
-mkdir -p "./batch"
-dagfile="./batch/SimulateTwinStarInference.dag"
-configfile="./batch/SimulateTwinStarInference.config"
+mkdir -p "$PWD/batch"
+dagfile="$PWD/batch/SimulateTwinStarInference.dag"
+configfile="$PWD/batch/SimulateTwinStarInference.config"
 
 echo "${scenarios}" > $configfile
 echo "${scenariotags}" >> $configfile
@@ -31,18 +31,19 @@ IFS=',' read -r -a hybrideoss <<< "$hybrideoss"
 # Print sub files
 
 binfile="SimulateTwinStarInference.sh"
-subfile="./batch/${binfile}.sub"
+subfile="$PWD/batch/${binfile}.sub"
 args="arguments = \"\$(scenario) \$(baseeos) \$(hybrideos) \$(scenariotag) \$(versiontag)\""
 
 echo "universe = vanilla" > $subfile
-echo "executable = ./$binfile" >> $subfile
+echo "executable = $PWD/$binfile" >> $subfile
 echo $args >> $subfile
-echo "output = ./batch/$binfile.out" >> $subfile
-echo "error = ./batch/$binfile.err" >> $subfile
-echo "log = ./batch/$binfile.log" >> $subfile
+echo "output = $PWD/batch/$binfile.out" >> $subfile
+echo "error = $PWD/batch/$binfile.err" >> $subfile
+echo "log = $PWD/batch/$binfile.log" >> $subfile
 echo "getenv = True" >> $subfile
-echo "accounting_group = ligo.dev.o4.cbc.extrememmatter.bilby" >> $subfile
+echo "accounting_group = ligo.dev.o4.cbc.extremematter.bilby" >> $subfile
 echo "accounting_group_user = philippe.landry" >> $subfile
+echo "request_disk = 256MB" >> $subfile
 echo "queue 1" >> $subfile
 
 # Print dag file
