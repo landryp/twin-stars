@@ -4,8 +4,8 @@
 # In[1]:
 
 
-'ScriptDOIT.IPYNB -- do end-to-end twin star inference'
-__usage__ = 'ScriptDOIT scenario base_eos hybrid_eos -t scenario_tag -v version_tag'
+'SIMULATETWINSTARINFERENCE.PY -- do end-to-end twin star inference'
+__usage__ = 'SimulateTwinStarInference.py scenario base_eos hybrid_eos -t scenario_tag -v version_tag'
 __author__ = 'Philippe Landry (pgjlandry@gmail.com)'
 __date__ = '09-2022'
 
@@ -56,8 +56,8 @@ VERSION_TAG = str(args.versiontag)
 
 # import bilby and lal
 
-get_ipython().system(' python3 -m pip install bilby # only need to run this once')
-get_ipython().system(' python3 -m pip install lalsuite # only need to run this once')
+#get_ipython().system(' python3 -m pip install bilby # only need to run this once')
+#get_ipython().system(' python3 -m pip install lalsuite # only need to run this once')
 
 import bilby
 import lal
@@ -76,16 +76,18 @@ G = 6.67e-8
 c = 2.998e10
 Msol = 1.99e33
 
+if VERSION_TAG == '': np.random.seed(0)
+else: np.random.seed(int(VERSION_TAG[-1]))
 
 # In[5]:
 
 
 # user scenario input
 
-num_pop = {'O4': 4, 'O5': 2*17, '3G': 5823}[SCENARIO] # number of events to draw; based on astrophysical rate estimates within detector horizon
+num_pop = {'O4': 3, 'O5': 2*15, '3G': 5800}[SCENARIO] # number of events to draw; based on astrophysical rate estimates within detector horizon
 # see https://arxiv.org/abs/2204.07592, https://arxiv.org/abs/2204.12504, https://arxiv.org/abs/2003.04880, https://arxiv.org/abs/2111.03634, https://arxiv.org/abs/1304.0670, https://arxiv.org/abs/2109.09882
 
-detailed_num_pop = {'O4': 4, 'O5': 17, 'O5y2': 34, '3Gd1': 16, '3Gw1': 112, '3Gm1': 485, '3G': 5823}[SCENARIO+SCENARIOTAG] # number of events in population
+detailed_num_pop = {'O4': 3, 'O5': 15, 'O5y2': 30, '3Gd1': 16, '3Gw1': 112, '3Gm1': 484, '3G': 5800}[SCENARIO+SCENARIOTAG] # number of events in population
 
 NOISE = 1. # set zero for zero-noise injections, 1 for detector white noise
 DET_THRES = 12. # detection snr threshold
@@ -114,46 +116,50 @@ OUTDIR = './{0}_BNS_{1}{2}/'.format(POPMOD,eos,VERSION_TAG)
 MMIN = 1.0 # 0.9 # minimum NS mass on grid
 MMAX = 2.3 # 2.12 # maximum NS mass on grid
 
-MPARAMS = [MMIN] #[1.34,0.07,1.80,0.21,0.65,MMIN] # mass distribution parameters, except for MMAX (automatically appended later)
-
-def NS_MASS_PDF(m,params): # NS mass distribution probability density function
-
-  mmin, mmax = params
-	
-  if np.isscalar(m): m = np.array([m])
-  else: m = np.array(m)
-  z = np.zeros(len(m))
-	
-  p = np.full(len(m),1./(mmax-mmin)) # uniform mass distribution
-
-  return np.where((m > mmax) | (m < mmin), z, p) # this enforces the mmin and mmax cutoffs
-
-'''
-def NS_MASS_PDF(m,params): # NS mass distribution probability density function
+if POPMOD == 'unif':
     
-  def gaussian(m,lambdaa):
+    MPARAMS = [MMIN] # mass distribution parameters, except for MMAX (automatically appended later)
 
-    mu, sigma = lambdaa[:2]
-	
-    if np.isscalar(m): m = np.array([m])
-    else: m = np.array(m)
-	
-    p = np.exp(-((m-mu)/(np.sqrt(2)*sigma))**2)/(sigma*np.sqrt(2*np.pi))
-	
-    return p
+    def NS_MASS_PDF(m,params): # NS mass distribution probability density function
 
-  mu1, sigma1, mu2, sigma2, w, mmin, mmax = params
-	
-  if np.isscalar(m): m = np.array([m])
-  else: m = np.array(m)
-  z = np.zeros(len(m))
-	
-  norm1 = 0.5*(scipy.special.erf((mmax-mu1)/(np.sqrt(2)*sigma1))-scipy.special.erf((mmin-mu1)/(np.sqrt(2)*sigma1)))
-  norm2 = 0.5*(scipy.special.erf((mmax-mu2)/(np.sqrt(2)*sigma2))-scipy.special.erf((mmin-mu2)/(np.sqrt(2)*sigma2)))
-  p = w*gaussian(m,(mu1,sigma1))/norm1 + (1.-w)*gaussian(m,(mu2,sigma2))/norm2 # bimodal mass distribution
+      mmin, mmax = params
 
-  return np.where((m > mmax) | (m < mmin), z, p) # this enforces the mmin and mmax cutoffs
-'''
+      if np.isscalar(m): m = np.array([m])
+      else: m = np.array(m)
+      z = np.zeros(len(m))
+
+      p = np.full(len(m),1./(mmax-mmin)) # uniform mass distribution
+
+      return np.where((m > mmax) | (m < mmin), z, p) # this enforces the mmin and mmax cutoffs
+
+elif POPMOD == 'bimod':
+    
+    MPARAMS = [1.34,0.07,1.80,0.21,0.65,MMIN] # mass distribution parameters, except for MMAX (automatically appended later)
+    
+    def NS_MASS_PDF(m,params): # NS mass distribution probability density function
+
+      def gaussian(m,lambdaa):
+
+        mu, sigma = lambdaa[:2]
+
+        if np.isscalar(m): m = np.array([m])
+        else: m = np.array(m)
+
+        p = np.exp(-((m-mu)/(np.sqrt(2)*sigma))**2)/(sigma*np.sqrt(2*np.pi))
+
+        return p
+
+      mu1, sigma1, mu2, sigma2, w, mmin, mmax = params
+
+      if np.isscalar(m): m = np.array([m])
+      else: m = np.array(m)
+      z = np.zeros(len(m))
+
+      norm1 = 0.5*(scipy.special.erf((mmax-mu1)/(np.sqrt(2)*sigma1))-scipy.special.erf((mmin-mu1)/(np.sqrt(2)*sigma1)))
+      norm2 = 0.5*(scipy.special.erf((mmax-mu2)/(np.sqrt(2)*sigma2))-scipy.special.erf((mmin-mu2)/(np.sqrt(2)*sigma2)))
+      p = w*gaussian(m,(mu1,sigma1))/norm1 + (1.-w)*gaussian(m,(mu2,sigma2))/norm2 # bimodal mass distribution
+
+      return np.where((m > mmax) | (m < mmin), z, p) # this enforces the mmin and mmax cutoffs
 
 def BNS_MASS_PDF(m1,m2,params): # BNS mass distribution probability density function
 
@@ -184,7 +190,7 @@ def SPIN_PDF(chi,params): # spin distribution probability density function
 
 ZMIN = 1e-6
 DLMIN = Distance(z=ZMIN, unit=u.Mpc).value
-DLMAX = {'O4': 200., 'O5': 350., '3G': 3000.}[SCENARIO] # Mpc; 200, 350, 100000 are reasonable range estimates for O4, O5, 3G; see https://arxiv.org/abs/1304.0670, https://arxiv.org/abs/2109.09882
+DLMAX = {'O4': 190., 'O5': 330., '3G': 3000.}[SCENARIO] # Mpc; 200, 350, 100000 are reasonable range estimates for O4, O5, 3G; see https://arxiv.org/abs/1304.0670, https://arxiv.org/abs/2109.09882
 
 def SFR(z): # star formation rate as a function of redshift
     
@@ -293,10 +299,10 @@ if HYBRID_EOS is '':
 
 L14 = Lambda_of_M_base(1.4)
 Mt = 0.5*(Mtwin_f + Mtwin_i)
-DeltaL = 0.5*(Lambda_of_M_hadron(Mt)-Lambda_of_M_hybrid(Mt))
+DeltaL = Lambda_of_M_hadron(Mt)-Lambda_of_M_hybrid(Mt)
 
-print(L14,Mt,DeltaL)
-np.savetxt(OUTDIR+'/{0}_twinparams.csv'.format(eos),np.column_stack(([L14],[Mt],[DeltaL])),header='L14,Mt,DeltaL',delimiter=',',comments='')
+#print(L14,Mt,DeltaL)
+np.savetxt(OUTDIR+'/{0}_twinstarparameters.csv'.format(eos),np.column_stack(([L14],[Mt],[DeltaL])),header='L14,Mt,DeltaL',delimiter=',',comments='')
 
 plt.plot(np.linspace(1.,Mmax,100),[Lambda_of_M(m) for m in np.linspace(1.,Mmax,100)],c=sns.color_palette()[1])
 plt.scatter(Ms,Lambdas,c='k',marker='.',alpha=0.2)
@@ -307,7 +313,7 @@ plt.ylim(1.,1e4)
 plt.yscale('log')
 plt.xlabel(r'$m\;[M_\odot]$')
 plt.ylabel(r'$\Lambda$')
-plt.savefig(OUTDIR+'/{0}_interpcheck.png'.format(eos))
+plt.savefig(OUTDIR+'/{0}_checkmLambdafit.png'.format(eos))
 
 
 # In[12]:
@@ -318,12 +324,12 @@ plt.savefig(OUTDIR+'/{0}_interpcheck.png'.format(eos))
 PRIOR_MMIN = 1.
 PRIOR_MMAX = Mmax
 
-PRIOR_L14MIN = 100.
-PRIOR_L14MAX = 1600.
+PRIOR_L14MIN = 0.
+PRIOR_L14MAX = 2000.
 PRIOR_MtMIN = PRIOR_MMIN
 PRIOR_MtMAX = PRIOR_MMAX
 PRIOR_DeltaLMIN = 0.
-PRIOR_DeltaLMAX = 1000.
+PRIOR_DeltaLMAX = L14*(Mt/1.4)**(-6)
 
 START_L14 = (0.9*L14,1.1*L14)
 START_Mt = (0.9*Mt,1.1*Mt)
@@ -332,7 +338,7 @@ if HYBRID_EOS is '': START_DeltaL = (0.,100.)
 
 NLIKE = 1000 # number of GW likelihood samples per event
 N_WALKERS = 10
-N_POSTS = 10000
+N_POSTS = 20000
 N_BURNIN = 100
 ndims = 3
 
@@ -490,7 +496,7 @@ if not os.path.isfile(pop_path):
     plt.ylabel(r'$m_2\;[M_\odot]$')
     plt.xlim(MMIN,MMAX)
     plt.ylim(MMIN,MMAX)
-    plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_checkmasses.png'.format(SCENARIO,POPMOD,eos))
+    plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_checkms.png'.format(SCENARIO,POPMOD,eos))
 
     plt.figure()
     plt.plot(Ms,Lambdas,c='k') # m1-Lambda1 and m2-Lambda2 samples overlaid on EOS's M-Lambda relation
@@ -541,9 +547,9 @@ def Lambda_of_m_twin(m,L14,Mt,DeltaL,LambdaMmax=3.):
     
     Lambda_hadron = L14*(m/1.4)**(-6)
     
-    Lambda_mmax = (L14*(Mt/1.4)**(-6)- 2.*DeltaL)*(Mmax/Mt)**(-9) - LambdaMmax
+    Lambda_mmax = (L14*(Mt/1.4)**(-6)- DeltaL)*(Mmax/Mt)**(-9) - LambdaMmax
     
-    Lambda_hybrid = (L14*(Mt/1.4)**(-6)- 2.*DeltaL)*(m/Mt)**(-9) - Lambda_mmax*((m-Mt)/(Mmax-Mt))
+    Lambda_hybrid = (L14*(Mt/1.4)**(-6)- DeltaL)*(m/Mt)**(-9) - Lambda_mmax*((m-Mt)/(Mmax-Mt))
     
     return np.where(m > Mt,Lambda_hybrid,Lambda_hadron)
 
@@ -711,7 +717,7 @@ t1 = time()
 timeemcee = (t1-t0)
 
 acls = sampler.get_autocorr_time(quiet=True)
-print('Maximum chain autocorrelation lengths for parameters: {0}'.format(acls))
+#print('Maximum chain autocorrelation lengths for parameters: {0}'.format(acls))
 
 if np.all(np.isfinite(acls)):
     
@@ -719,7 +725,7 @@ if np.all(np.isfinite(acls)):
     num_samples_emcee = len(samples_emcee)
     ess = int(num_samples_emcee / timeemcee)
     
-    print('Number of posterior samples, runtime and effective samples per second: {0}, {1}, {2}'.format(num_samples_emcee,timeemcee,ess))
+    #print('Number of posterior samples, runtime and effective samples per second: {0}, {1}, {2}'.format(num_samples_emcee,timeemcee,ess))
     
     L14s = samples_emcee[:,0]
     Mts = samples_emcee[:,1]
@@ -816,5 +822,5 @@ plt.ylabel(r'$\Lambda$')
 plt.yscale('log')
 
 plt.legend(frameon=False)
-plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_MLambda-{3}.png'.format(SCENARIO,POPMOD,eos,SCENARIO+SCENARIOTAG))
+plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_mLambda-{3}.png'.format(SCENARIO,POPMOD,eos,SCENARIO+SCENARIOTAG))
 
