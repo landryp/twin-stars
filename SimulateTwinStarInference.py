@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 # In[1]:
@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-get_ipython().system(' python3 -m pip install seaborn --upgrade')
+#get_ipython().system(' python3 -m pip install seaborn --upgrade')
 import seaborn as sns
 import scipy.stats as stats
 from time import time
@@ -219,8 +219,9 @@ def DL_PDF(dl,params): # luminosity distance distribution probability density fu
 # In[8]:
 
 
-get_ipython().run_cell_magic('bash', '-s "$OUTDIR"', 'mkdir -p "$1"')
-
+#get_ipython().run_cell_magic('bash', '-s "$OUTDIR"', 'mkdir -p "$1"')
+try: os.mkdir(OUTDIR)
+except: pass
 
 # In[9]:
 
