@@ -5,7 +5,7 @@
 
 
 'SIMULATETWINSTARINFERENCE.PY -- do end-to-end twin star inference'
-__usage__ = 'SimulateTwinStarInference.py scenario base_eos hybrid_eos -t scenario_tag -v version_tag'
+__usage__ = 'SimulateTwinStarInference.py scenario base_eos hybrid_eos scenario_tag version_tag'
 __author__ = 'Philippe Landry (pgjlandry@gmail.com)'
 __date__ = '09-2022'
 
@@ -19,6 +19,8 @@ from argparse import ArgumentParser
 import numpy as np
 import scipy.special
 from scipy.interpolate import interp1d
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import seaborn as sns
@@ -105,7 +107,7 @@ base_eos_path = '/home/philippe.landry/twin-stars/etc/macro-{0}.csv'.format(BASE
 
 POPMOD = 'unif'
 
-OUTDIR = './{0}_BNS_{1}{2}/'.format(POPMOD,eos,VERSION_TAG)
+OUTDIR = './dat/{0}_BNS_{1}{2}/'.format(POPMOD,eos,VERSION_TAG)
 
 
 # In[7]:
@@ -324,7 +326,7 @@ plt.savefig(OUTDIR+'/{0}_checkmLambdafit.png'.format(eos))
 PRIOR_MMIN = 1.
 PRIOR_MMAX = Mmax
 
-PRIOR_L14MIN = 0.
+PRIOR_L14MIN = 3.
 PRIOR_L14MAX = 2000.
 PRIOR_MtMIN = PRIOR_MMIN
 PRIOR_MtMAX = PRIOR_MMAX
@@ -491,7 +493,7 @@ if not os.path.isfile(pop_path):
 if not os.path.isfile(pop_path):
 
     plt.figure()
-    plt.scatter(m1s,m2s,marker='.',c=sns.color_palette()[1]) # scatter plot of BNS masses
+    plt.scatter(m1s,m2s,marker='.',color=sns.color_palette()[1]) # scatter plot of BNS masses
     plt.xlabel(r'$m_1\;[M_\odot]$')
     plt.ylabel(r'$m_2\;[M_\odot]$')
     plt.xlim(MMIN,MMAX)
@@ -500,8 +502,8 @@ if not os.path.isfile(pop_path):
 
     plt.figure()
     plt.plot(Ms,Lambdas,c='k') # m1-Lambda1 and m2-Lambda2 samples overlaid on EOS's M-Lambda relation
-    plt.scatter(m1s,Lambda1s,marker='.',c=sns.color_palette()[1])
-    plt.scatter(m1s,Lambda1s,marker='.',c=sns.color_palette()[1])
+    plt.scatter(m1s,Lambda1s,marker='.',color=sns.color_palette()[1])
+    plt.scatter(m1s,Lambda1s,marker='.',color=sns.color_palette()[1])
     plt.yscale('log')
     plt.xlabel(r'$m\;[M_\odot]$')
     plt.ylabel('$\Lambda$')
@@ -764,8 +766,8 @@ trace_plot(sampler.chain,['L14','Mt','DeltaL'],N_BURNIN)
 
 # In[ ]:
 
-
-sns.kdeplot(data=post,x='L14',y='Mt',levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1])
+fig = plt.figure()
+sns.kdeplot(post['L14'],post['Mt'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1])
 plt.scatter(np.random.uniform(PRIOR_L14MIN,PRIOR_L14MAX,5000),np.random.uniform(PRIOR_MtMIN,PRIOR_MtMAX,5000),marker='.',c='k',alpha=0.05,label='prior')
 plt.scatter(L14,Mt,marker='+',c='r',label='injection')
 plt.legend(frameon=False)
@@ -774,8 +776,8 @@ plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_L14Mtwin-{3}.png'.format(SCENARIO,POPMOD,eo
 
 # In[ ]:
 
-
-sns.kdeplot(data=post,x='L14',y='DeltaL',levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
+fig = plt.figure()
+sns.kdeplot(post['L14'],post['DeltaL'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
 plt.scatter(np.random.uniform(PRIOR_L14MIN,PRIOR_L14MAX,5000),np.random.uniform(PRIOR_DeltaLMIN,PRIOR_DeltaLMAX,5000),marker='.',c='k',alpha=0.05,label='prior')
 plt.scatter(L14,DeltaL,marker='+',c='r',label='injection')
 plt.legend(frameon=False)
@@ -784,8 +786,8 @@ plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_L14DeltaL-{3}.png'.format(SCENARIO,POPMOD,e
 
 # In[ ]:
 
-
-sns.kdeplot(data=post,x='Mt',y='DeltaL',levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
+fig = plt.figure()
+sns.kdeplot(post['Mt'],post['DeltaL'],levels=[0.1,0.5],label='posterior',color=sns.color_palette()[1],)
 plt.scatter(np.random.uniform(PRIOR_MtMIN,PRIOR_MtMAX,5000),np.random.uniform(PRIOR_DeltaLMIN,PRIOR_DeltaLMAX,5000),marker='.',c='k',alpha=0.05,label='prior')
 plt.scatter(Mt,DeltaL,marker='+',c='r',label='injection')
 plt.legend(frameon=False)
@@ -800,6 +802,7 @@ medMt = np.median(Mts)
 medDeltaL = np.median(DeltaLs)
 #print(medL14,medMtwin,medDeltaL)
 
+fig = plt.figure()
 plt.scatter(inj[:,0],inj[:,4],marker='+',c='r',alpha=1.,label='injection')
 plt.scatter(mc_samps,lambdatilde(Lambda_of_m_twin(m1_samps,medL14,medMt,medDeltaL),Lambda_of_m_twin(m2_samps,medL14,medMt,medDeltaL),m1_samps,m2_samps),marker='.',c='k',alpha=0.05,label='PPD')
 
@@ -813,7 +816,7 @@ plt.savefig(OUTDIR+'/{0}_{1}_BNS_{2}_MchirpLambdatilde-{3}.png'.format(SCENARIO,
 
 # In[ ]:
 
-
+fig = plt.figure()
 plt.plot(Ms,Lambdas,c='r',alpha=1.,label='injection')
 plt.scatter(m1_samps,Lambda_of_m_twin(m1_samps,medL14,medMt,medDeltaL),marker='.',c='k',alpha=0.2,label='PPD')
 
