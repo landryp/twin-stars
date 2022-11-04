@@ -308,6 +308,7 @@ DeltaL = Lambda_of_M_hadron(Mt)-Lambda_of_M_hybrid(Mt)
 #print(L14,Mt,DeltaL)
 np.savetxt(OUTDIR+'/{0}_twinstarparameters.csv'.format(eos),np.column_stack(([L14],[Mt],[DeltaL])),header='L14,Mt,DeltaL',delimiter=',',comments='')
 
+fig = plt.figure()
 plt.plot(np.linspace(1.,Mmax,100),[Lambda_of_M(m) for m in np.linspace(1.,Mmax,100)],c=sns.color_palette()[1])
 plt.scatter(Ms,Lambdas,c='k',marker='.',alpha=0.2)
 plt.scatter(1.4,L14,marker='.',s=50,c=sns.color_palette()[0])
