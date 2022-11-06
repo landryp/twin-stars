@@ -5,7 +5,7 @@
 
 
 'SIMULATETWINSTARINFERENCE.PY -- do end-to-end twin star inference'
-__usage__ = 'SimulateTwinStarInference.py scenario base_eos hybrid_eos scenario_tag version_tag'
+__usage__ = 'SimulateTwinStarInference.py scenario base_eos hybrid_eos scenario_tag version_tag popmod'
 __author__ = 'Philippe Landry (pgjlandry@gmail.com)'
 __date__ = '09-2022'
 
@@ -45,6 +45,7 @@ parser.add_argument('base_eos')
 parser.add_argument('hybrid_eos')
 parser.add_argument('scenariotag')
 parser.add_argument('versiontag')
+parser.add_argument('popmod')
 args = parser.parse_args()
 
 SCENARIO = str(args.scenario) # O4, O5, 3G
@@ -52,7 +53,7 @@ SCENARIOTAG = str(args.scenariotag) # can add y2, d1, w1, m1 tags to make O5y2 o
 BASE_EOS = str(args.base_eos)
 HYBRID_EOS = str(args.hybrid_eos)
 VERSION_TAG = str(args.versiontag)
-
+POPMOD = str(args.popmod)
 
 # In[3]:
 
@@ -105,8 +106,6 @@ eos = BASE_EOS+HYBRID_EOS
 
 eos_path = '/home/philippe.landry/twin-stars/etc/macro-{0}_{1}.csv'.format(BASE_EOS,HYBRID_EOS) # EOS M-Lambda table
 base_eos_path = '/home/philippe.landry/twin-stars/etc/macro-{0}.csv'.format(BASE_EOS) # EOS M-Lambda table
-
-POPMOD = 'unif'
 
 OUTDIR = './dat/{0}_BNS_{1}{2}/'.format(POPMOD,eos,VERSION_TAG)
 
@@ -308,6 +307,7 @@ DeltaL = Lambda_of_M_hadron(Mt)-Lambda_of_M_hybrid(Mt)
 #print(L14,Mt,DeltaL)
 np.savetxt(OUTDIR+'/{0}_twinstarparameters.csv'.format(eos),np.column_stack(([L14],[Mt],[DeltaL])),header='L14,Mt,DeltaL',delimiter=',',comments='')
 
+fig = plt.figure()
 plt.plot(np.linspace(1.,Mmax,100),[Lambda_of_M(m) for m in np.linspace(1.,Mmax,100)],c=sns.color_palette()[1])
 plt.scatter(Ms,Lambdas,c='k',marker='.',alpha=0.2)
 plt.scatter(1.4,L14,marker='.',s=50,c=sns.color_palette()[0])

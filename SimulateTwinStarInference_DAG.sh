@@ -10,6 +10,8 @@ hybrideoss=$4 # 2009
 
 numversions=$5 # v1
 
+popmod=$6 # unif
+
 # Create output files and directories
 
 mkdir -p "$PWD/batch"
@@ -21,6 +23,7 @@ echo "${scenariotags}" >> $configfile
 echo "${baseeoss}" >> $configfile
 echo "${hybrideoss}" >> $configfile
 echo "${numversions}" >> $configfile
+echo "${popmod}" >> $configfile
 
 IFS=',' read -r -a scenarios <<< "$scenarios"
 IFS=',' read -r -a scenariotags <<< "$scenariotags"
@@ -32,7 +35,7 @@ IFS=',' read -r -a hybrideoss <<< "$hybrideoss"
 
 binfile="SimulateTwinStarInference.sh"
 subfile="$PWD/batch/${binfile}.sub"
-args="arguments = \"\$(scenario) \$(baseeos) \$(hybrideos) \$(scenariotag) \$(versiontag)\""
+args="arguments = \"\$(scenario) \$(baseeos) \$(hybrideos) \$(scenariotag) \$(versiontag) \$(popmod)\""
 
 echo "universe = vanilla" > $subfile
 echo "executable = $PWD/$binfile" >> $subfile
@@ -62,7 +65,7 @@ do
         do
         
             echo "JOB $job $subfile" >> $dagfile
-            echo "VARS $job scenario=\"${scenarios[$i]}\" baseeos=\"${baseeoss[$j]}\" hybrideos=\"${hybrideoss[$j]}\" scenariotag=\"${scenariotags[$i]}\" versiontag=\"v${k}\"" >> $dagfile
+            echo "VARS $job scenario=\"${scenarios[$i]}\" baseeos=\"${baseeoss[$j]}\" hybrideos=\"${hybrideoss[$j]}\" scenariotag=\"${scenariotags[$i]}\" versiontag=\"v${k}\" popmod=\"${popmod}\"" >> $dagfile
             echo "RETRY $job 1" >> $dagfile
             
             if [[("$i" > 0) && ("${scenarios[$i]}" == "${scenarios[$(($i-1))]}")]]
