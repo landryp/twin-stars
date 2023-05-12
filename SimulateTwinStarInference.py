@@ -471,11 +471,13 @@ if not os.path.isfile(pop_path):
       if SCENARIO == '3G': 
         interferometers = bilby.gw.detector.InterferometerList(['CE', 'L1', 'ET'])
         interferometers[1].power_spectral_density = bilby.gw.detector.PowerSpectralDensity(psd_file='/home/philippe.landry/.local/lib/python3.7/site-packages/bilby/gw/detector/noise_curves/CE_psd.txt') # two CEs at HL sites, ET at V site
+        for interferometer in interferometers: interferometer.minimum_frequency = 10 # 10 Hz min freq for 3G
       else:
         interferometers = bilby.gw.detector.InterferometerList(['H1', 'L1', 'V1'])
         for interferometer in interferometers:
-          #interferometer.minimum_frequency = 40 # leave this as the interferometer default, 40 Hz for O4 and 10 Hz for O5, 3G
+          if SCENARIO == 'O4': interferometer.minimum_frequency = 20 # 20 Hz min freq for O4
           if SCENARIO == 'O5' and interferometer.name != 'V1': interferometer.power_spectral_density = bilby.gw.detector.PowerSpectralDensity(asd_file='/home/philippe.landry/.local/lib/python3.7/site-packages/bilby/gw/detector/noise_curves/Aplus_asd.txt') # upgrade HL to A+ in O5
+          else: interferometer.minimum_frequency = 10 # 10 Hz min freq for O5
       interferometers.set_strain_data_from_power_spectral_densities(
         sampling_frequency=sampling_frequency, duration=duration, start_time=start_time)
 
@@ -588,15 +590,17 @@ def loglikelihood(theta,d,msamps):
     L2_samps = Lambda_of_m_twin(m2_samps,L14,Mt,DeltaL)
     Lt_samps = lambdatilde(L1_samps,L2_samps,m1_samps,m2_samps)
     
+    Lt_samps[Lt_samps < 0.] = -np.inf
+    
     one_event_likes = []
     j = 0
     for one_event_d in d:
         
         mc_mean,dmc,q_mean,dq,Lt_mean,dLt = one_event_d
     
-        mc_gaussian = stats.norm.pdf(mc_samps,loc=mc_mean,scale=dmc/1.645)
-        q_gaussian = stats.norm.pdf(q_samps,loc=q_mean,scale=dq/1.645)
-        Lt_gaussian = stats.norm.pdf(Lt_samps,loc=Lt_mean,scale=dLt/1.645)
+        mc_gaussian = stats.norm.pdf(mc_samps,loc=mc_mean,scale=dmc/1.645)/(0.5*scipy.special.erf((3.*dmc/1.645)/np.sqrt(2.*dmc**2/1.645**2)))
+        q_gaussian = stats.norm.pdf(q_samps,loc=q_mean,scale=dq/1.645)/(0.5*scipy.special.erf((1.-q_mean)/np.sqrt(2.*dq**2/1.645**2)))
+        Lt_gaussian = stats.norm.pdf(Lt_samps,loc=Lt_mean,scale=dLt/1.645)/(0.5*scipy.special.erf((3.*dLt/1.645)/np.sqrt(2.*dLt**2/1.645**2)))
             
         likes = mc_gaussian*q_gaussian*Lt_gaussian
         one_event_likes += [np.sum(likes)]
@@ -649,9 +653,25 @@ dmcs = [GW170817dmc*GW170817snr/snr for snr in snrs]
 dqs = [GW170817dq*GW170817snr/snr for snr in snrs]
 dLts = [GW170817dLt*GW170817snr/snr for snr in snrs]
 
-mc_means = np.array([mc + NOISE*np.random.normal(0.,dmc/1.645) for mc,dmc in zip(mcs,dmcs)])
-q_means = np.array([q + NOISE*np.random.normal(0.,dq/1.645) for q,dq in zip(qs,dqs)])
-Lt_means = np.array([Lt + NOISE*np.random.normal(0.,dLt/1.645) for Lt,dLt in zip(Lts,dLts)])
+mc_means, q_means, Lt_means = [], [], []
+for mc,dmc,q,dq,Lt,dLt in zip(mcs,dmcs,qs,dqs,Lts,dLts):
+
+    mc_mean = -1
+    q_mean = -1
+    Lt_mean = -1
+    while mc_mean < 0. or q_mean < 0. or Lt_mean < 0.:
+
+        mc_mean = mc + NOISE*np.random.normal(0.,dmc/1.645)
+        q_mean = q + NOISE*np.random.normal(0.,dq/1.645)
+        Lt_mean = Lt + NOISE*np.random.normal(0.,dLt/1.645)
+    
+    mc_means += [mc_mean]
+    q_means += [q_mean]
+    Lt_means += [Lt_mean]
+
+mc_means = np.array(mc_means)
+q_means = np.array(q_means)
+Lt_means = np.array(Lt_means)
 
 inj = []
 d = [] 
